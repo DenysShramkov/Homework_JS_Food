@@ -249,37 +249,44 @@ window.addEventListener('DOMContentLoaded', () => {
 			`;
 
 			form.insertAdjacentElement('afterend', statusMassage);
-
+			request.open('POST', 'server.php');
+			//request.setRequestHeader('Content-type', 'multipar/form-data');
+			//hпи использовании FromData не надо устанавливать заголовок, так как он устанавливается автоматически
+			//чтобы руками не пришлось формировать из форм объект, можно использовать класс FormData
+			//(нормально работает в php)
 			const formData = new FormData(form);
+			//в верстке, если данные идут на сервер, всегда надо указывать name в теге input
 
+			//если надо получить данные в формате JSON
+
+			//после open
+			//request.setRequestHeader('Content-type', 'application/son');
+			//const formData = new FormData(form); нельзя formdata заставить сделать JSON
 			//const object = {
 			//	formData.forEach(function(value, key) {
 				//object[key] = value;
-			//)};
-			//} для отправки с fetch формата JSON
+			//}) из списка от FromData мы создаем оъект перебором
+			//}
+			//const json = JSON.stringify(object); после чего помещаем в send вместо FormData
+			//php не умеет работать с json напрямую, в php надо дописать
+			//$_POST = json_decode(file_get_contents("php://input"), true);
 
+			request.send(formData);
 
-			//особенность fetch не перейдет в состояние отклонено, если столкнулся с http протоколом (например 404)
-			//он все равно выполнится нормально и при ошибке
-			//свойство status перейдет в false
-			//ошибко будет только если что-то помешает запросу выполнится вообще
-			fetch('server.php', {
-				method: 'POST',
-				/* headers: {
-					'Content-type': 'application/json'
-				}, */ //при отправке formData не надо делать заголовок
-				//body: JSON.stringify(object) в комментариях конструкция для JSON, до fetch надо запустить цикл
-				body: formData
-			}).then(data => data.text()) //преобразование ответа от сервера
-			.then(data => {
-				console.log(data);
-				form.reset();
-				statusMassage.remove();
-				showModalAfterSend(massage.succes); 
-			}).catch(() => {
-				showModalAfterSend(massage.failure); //кетч необходимо прописывать всегда на случай ошибок
-			}).finally(() => {
-				form.reset(); //действие, которое должно выполнятся вне зависимости от результата
+			request.addEventListener('load', () => {
+				if (request.status === 200) {
+					//console.log(request.response); //лог ответа от сервера
+					//который в PHP настроен как эхо нашего POST
+					//statusMassage.textContent = massage.//succes; //сообщение успеха
+					form.reset(); //очистка формы
+					//setTimeout(() => {
+					statusMassage.remove(); //удаление сообщения
+					//}, 2000);
+					showModalAfterSend(massage.succes); 
+				} else {
+					//statusMassage.textContent = massage.failure;
+					showModalAfterSend(massage.failure); 
+				}
 			});
 		});
 	}
@@ -306,23 +313,4 @@ window.addEventListener('DOMContentLoaded', () => {
 		}, 3000);
 	}
 
-	//это вариант вместо гет запроса
-	fetch('https://jsonplaceholder.typicode.com/todos/1') //если ничего не передавать, будет классический GET запрос
-		.then(response => response.json()) //fetch использует промисы. Тут объект вернется в виде промиса
-		//в fetch уже встроент инструмент для расшифровки json и превращения его в обычный объект
-		.then(json => console.log(json));
-
-		//fetch используется вместо устаревших httprequest, однако и его можно встретить в старых проэктах
-
-	
-/* 	для PUT fetch надо настроить, а именно передать в него некий body
-	fetch('https://jsonplaceholder.typicode.com/posts', { //это фейковая апишка, туда ничего не записывается, используется для проверки и отладки
-		method: "POST",
-		body: JSON.stringify({name: 'Alex'}),
-		headers: {
-			'Content-type': 'appliction/json'
-		}	
-})
-	.then(response => response.json())
-	.then(json => console.log(json)); */
 });
