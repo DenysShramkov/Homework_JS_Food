@@ -262,11 +262,11 @@ window.addEventListener('DOMContentLoaded', () => {
 			//после open
 			//request.setRequestHeader('Content-type', 'application/son');
 			//const formData = new FormData(form); нельзя formdata заставить сделать JSON
-			//const object = {
-			//	formData.forEach(function(value, key) {
-				//object[key] = value;
-			//}) из списка от FromData мы создаем оъект перебором
-			//}
+			//const object = {};
+			//formData.forEach(function(value, key) {
+			//object[key] = value;
+			//}); из списка от FromData мы создаем оъект перебором
+			
 			//const json = JSON.stringify(object); после чего помещаем в send вместо FormData
 			//php не умеет работать с json напрямую, в php надо дописать
 			//$_POST = json_decode(file_get_contents("php://input"), true);

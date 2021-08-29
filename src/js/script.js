@@ -141,6 +141,122 @@ window.addEventListener('DOMContentLoaded', () => {
 	openModal(btn);
 	closeModal(modal);
 
+	const getData = async (url) => {
+		//для получения достаточно ссылки, остального не надо
+		const res = await fetch(url); 
+		//fetch не выдаст ошибку, только если не будет интернета, ошбики с сервером не отслеживает
+		//у промиса, который возвращает fetch есть несколько полезных свойств .ок - что мы получили ответ от сервера
+		//второе свойство status - который вернул сервер
+
+		if (!res.ok) {//если res не ок
+			throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+			//мы создаем новый объект ошибки который выкидываем через throuw
+		}
+		return await res.json();
+	};
+
+	function renderSlider(imgSRC, imgAlt, sliderElem) {
+		sliderElem = document.querySelector(sliderElem);
+		sliderElem.innerHTML = (`<img class='fade' src="${imgSRC}" alt="${imgAlt}"></img>`);
+	}
+
+	function sliderCounterTotal(lengthData, totalElem) {
+		document.querySelector(totalElem).textContent = addZero(lengthData);
+	}
+
+	function sliderCounterCurrent(i, currentElem) {
+		i = i + 1;
+		document.querySelector(currentElem).textContent = addZero(i);
+	}
+
+	function addZero(item) {
+		if (item < 10) {
+			item = `0${item}`;
+		}
+		return item;
+	}
+
+	function sliderBtn(btnParentClass, btnNext, btnPrev, imgData, sliderItem, currentElem, totalElem) {
+		let i = 0;
+		let lengthData = imgData.length;
+		let img = function() {
+			if (i + 1 > lengthData) {
+				i = 0;
+			} else if (i < 0) {
+				i = lengthData - 1;
+			}
+			return imgData[i];
+		};
+
+		renderSlider(img().img, img().altimg, sliderItem);
+		sliderCounterCurrent(i, '#current',);
+		document.querySelector(btnParentClass).addEventListener('click', (e) => {
+			if (e.target.classList.contains(btnNext)) {
+				++i;
+			} else if (e.target.classList.contains(btnPrev)) {
+				--i;
+			}
+			renderSlider(img().img, img().altimg, sliderItem);
+			sliderCounterCurrent(i, currentElem);
+		});
+
+		sliderCounterTotal(lengthData, totalElem);
+	}
+
+	getData('http://localhost:3000/slider')
+	.then(data => {
+		sliderBtn('.offer__slider-counter', 'nextBtn', 'prevBtn', data, '.offer__slide', '#current', '#total');
+	});
+
+	    // Slider ваниант кода преподавателя
+/* 
+		let slideIndex = 1;
+		const slides = document.querySelectorAll('.offer__slide'),
+			prev = document.querySelector('.offer__slider-prev'),
+			next = document.querySelector('.offer__slider-next'),
+			total = document.querySelector('#total'),
+			current = document.querySelector('#current');
+	
+		showSlides(slideIndex);
+	
+		if (slides.length < 10) {
+			total.textContent = `0${slides.length}`;
+		} else {
+			total.textContent = slides.length;
+		}
+	
+		function showSlides(n) {
+			if (n > slides.length) {
+				slideIndex = 1;
+			}
+			if (n < 1) {
+				slideIndex = slides.length;
+			}
+	
+			slides.forEach((item) => item.style.display = 'none');
+	
+			slides[slideIndex - 1].style.display = 'block'; 
+			// Как ваша самостоятельная работа - переписать на использование классов show/hide
+			
+			if (slides.length < 10) {
+				current.textContent =  `0${slideIndex}`;
+			} else {
+				current.textContent =  slideIndex;
+			}
+		}
+	
+		function plusSlides (n) {
+			showSlides(slideIndex += n);
+		}
+	
+		prev.addEventListener('click', function(){
+			plusSlides(-1);
+		});
+	
+		next.addEventListener('click', function(){
+			plusSlides(1);
+		}); */
+
 	const menuField = document.querySelector('.menu__field > .container');
 
 	class Menu {
@@ -186,12 +302,50 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	
-	const fitness = new Menu(
+	getData('http://localhost:3000/menu')
+	.then(data => {
+		data.forEach(({img, altimg, title, descr, price}) => { //деструктуризация объекта
+			//наша функция render() создана выше
+			//new Menu(obj.img, obj.altimg, obj.title, obj.descr, obj.price).render();
+			new Menu(img, altimg, title, descr, price, 28, menuField).render(); //вызываем метод класса подставляя значения
+		});
+	});
+
+	//библиотека axios, не надо писать функцию с getData и преобразовывать данные
+	//axios.get('http://localhost:3000/menu')//Запрост получен, больше информации и уже в нужном нам формате
+	//.then(data => {
+		//data.data.forEach(({img, altimg, title, descr, price}) => { 
+			//тафтология с data.data из-за того, что нам нужная не общая информация, а именно лежащая в ответе пункт с data
+			//new Menu(img, altimg, title, descr, price, 28, menuField).render();
+		//});
+	//});
+
+
+	//альтернативный способ, если не нужна шаблонизация, просто создать через функцию
+	/* getData('http://localhost:3000/menu').then(data => {
+		createCard(data);
+	}); */
+
+	//можно обойтись без классов
+	function createCard(data) {
+		data.forEach(({img, altimg, title, descr, price}) => { //деструктуризация на отдельные свойства
+			const element = document.createElement('div');
+			price = price*28;
+
+			element.classList('menu__item');
+
+			element.innerHTML= `верстка с элементами уже без this ${img}, ${altimg}, ${title}, ${descr}`;
+
+			document.querySelector('.menu .container').append(element);
+		});
+	}
+
+
+	/* 	const fitness = new Menu( заменяем данными с сервера json-server
 		'img/tabs/vegy.jpg',
 		'vegy',
 		'Меню "Фитнес"',
-		'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
+		'Меню "Фитнес" - это новый подход к приготовлению блюд:...',
 		9,
 		28,
 		menuField);
@@ -199,7 +353,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		'img/tabs/elite.jpg',
 		'elite',
 		'Меню “Премиум”',
-		'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
+		'В меню “Премиум” мы используем не только красивый дизайн...',
 		20,
 		28,
 		menuField);
@@ -207,20 +361,20 @@ window.addEventListener('DOMContentLoaded', () => {
 		'img/tabs/post.jpg',
 		'post',
 		'Меню "Постное"',
-		'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
+		'Меню “Постное” - это тщательный подбор ингредиентов...',
 		12,
 		28,
 		menuField,
 		'menu__item',
 		'empty',
-		'more');
+		'more'); */
 		
 
 	//можно new Menu(args).render(); не создается ссылка
 
-	fitness.render();
+	/* fitness.render();
 	premium.render();
-	postnoe.render();
+	postnoe.render(); вызов функции render() на объект*/
 
 	//menuField.innerHTML = fitness.returnInnerHTML() + premium.returnInnerHTML() + postnoe.returnInnerHTML();
 
@@ -233,14 +387,28 @@ window.addEventListener('DOMContentLoaded', () => {
 	};
 
 	forms.forEach(item => {
-		postData(item);
+		bindPostData(item);
 	});
 
-	function postData(form) {
+	const postData = async (url, data) => { //переносим fetch в отдельную функцию
+		//async говорит, что внутри функции асинхронный код
+		const res = await fetch(url, { //await говорит о том, что надо дождаться fetch
+			//прежде чем переходит к return
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			}, 
+			body: data, 
+		}); 
+		return await res.json(); //и здесь await - мы не знаем, через сколько данные обработаются
+		//это все асинхронный код, fetch возвращает промис, который изначально будет пустым и json ничего не вернет
+	};
+
+	function bindPostData(form) {
 		form.addEventListener('submit', (e) => {
 			//submit сработает каждый раз, когда мы попытаемся отправить форму
 			e.preventDefault();
-			const request = new XMLHttpRequest();
+			//const request = new XMLHttpRequest(); уже не надо
 			const statusMassage = document.createElement('img');
 			statusMassage.src = massage.loading;
 			statusMassage.style.cssText = `
@@ -252,25 +420,38 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			const formData = new FormData(form);
 
-			//const object = {
-			//	formData.forEach(function(value, key) {
-				//object[key] = value;
-			//)};
-			//} для отправки с fetch формата JSON
+			/* const object = {};
+			formData.forEach((value, key) => {
+			object[key] = value;
+			});  *///для отправки с fetch формата JSON
+			//меняет обработчик выше на более современный
+
+			//formData.entries() на выходе получим массив массивов из объекта типа
+			// [['a', 23], ['b', 4]] дальше необходимо опять сделать объект для передачи в JSON
+			//для этого есть обратный метод fromEntries
+			//таким образом справа на лево массив массивов => обект => формат json
+
+			const json = JSON.stringify(Object.fromEntries(formData.entries())); 
 
 
 			//особенность fetch не перейдет в состояние отклонено, если столкнулся с http протоколом (например 404)
 			//он все равно выполнится нормально и при ошибке
 			//свойство status перейдет в false
 			//ошибко будет только если что-то помешает запросу выполнится вообще
-			fetch('server.php', {
+
+			/* fetch('server.php', { ненужен, так как выше сделали функцию
 				method: 'POST',
-				/* headers: {
+				//заголовок для json
+				headers: {
 					'Content-type': 'application/json'
-				}, */ //при отправке formData не надо делать заголовок
-				//body: JSON.stringify(object) в комментариях конструкция для JSON, до fetch надо запустить цикл
+				}, //при отправке formData не надо делать заголовок
+				//body: JSON.stringify(object) //header и body нужен для JSON, до fetch надо запустить цикл
 				body: formData
-			}).then(data => data.text()) //преобразование ответа от сервера
+			}) */
+			
+			
+		postData('http://localhost:3000/requests', json/* JSON.stringify(object) */)
+		//.then(data => data.text()) //преобразование ответа от сервера, уже не надо, это происходит в post data
 			.then(data => {
 				console.log(data);
 				form.reset();
@@ -306,23 +487,22 @@ window.addEventListener('DOMContentLoaded', () => {
 		}, 3000);
 	}
 
-	//это вариант вместо гет запроса
-	fetch('https://jsonplaceholder.typicode.com/todos/1') //если ничего не передавать, будет классический GET запрос
-		.then(response => response.json()) //fetch использует промисы. Тут объект вернется в виде промиса
-		//в fetch уже встроент инструмент для расшифровки json и превращения его в обычный объект
-		.then(json => console.log(json));
+	/* fetch('http://localhost:3000/menu')
+	.then(data => data.json())
+	.then(res => console.log(res)); */
 
-		//fetch используется вместо устаревших httprequest, однако и его можно встретить в старых проэктах
 
-	
-/* 	для PUT fetch надо настроить, а именно передать в него некий body
-	fetch('https://jsonplaceholder.typicode.com/posts', { //это фейковая апишка, туда ничего не записывается, используется для проверки и отладки
-		method: "POST",
-		body: JSON.stringify({name: 'Alex'}),
-		headers: {
-			'Content-type': 'appliction/json'
-		}	
-})
-	.then(response => response.json())
-	.then(json => console.log(json)); */
+	//server-json
+	// npm i json-server --save-dev
+	//npm - npm пакеты
+	//i - сокращение от install
+	//json-server - название пакета
+	//можно указать -g для глобальной установки. Потребуется в начале писать sudo
+	//--save-dev  мы говорим, что испольуем для разработки. Зависимость для разработки
+	//если нужен пакет для работы внутри, тогда просто --save
+	//до установки надо указать npm init для создани пакета
+	//package.json содержит информацию от пакетах и ту, что мы в него положили
+	//package-lock.json - информация о зависимостях установленных пакетов
+
+	//далее при наличии package.json достаточно прописать в терминале npm i и подятнутся все пакеты
 });
