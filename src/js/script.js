@@ -165,7 +165,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	}
 
 	function sliderCounterCurrent(i, currentElem) {
-		i = i + 1;
+		i += 1;
 		document.querySelector(currentElem).textContent = addZero(i);
 	}
 
@@ -176,7 +176,31 @@ window.addEventListener('DOMContentLoaded', () => {
 		return item;
 	}
 
-	function sliderBtn(btnParentClass, btnNext, btnPrev, imgData, sliderItem, currentElem, totalElem) {
+	function renderStatusDots(parentElem, classWrapper, classDots, dotsNumber) {
+		const parent = document.querySelector(parentElem);
+		const wrapperSliderDots = document.createElement('div');
+		wrapperSliderDots.classList.add(classWrapper);
+		for (let i = 1; i <= dotsNumber; i++) {
+			const dot = document.createElement('div');
+			//создавать элемент обязательно в цикле
+			dot.classList.add(classDots);
+			dot.dataset.dot = i;
+			wrapperSliderDots.append(dot);
+			
+		}
+		parent.append(wrapperSliderDots);
+	}
+
+	function SliderDotsActive (i, dots) {
+		dots.forEach(item => {
+			item.classList.remove('offer__slider_dots-active');
+			if (item.dataset.dot == i + 1) {
+				item.classList.add('offer__slider_dots-active');
+			}
+		});
+	}
+
+	function sliderBtn(btnParentClass, btnNext, btnPrev, imgData, sliderItem, currentElem, totalElem, classDots) {
 		let i = 0;
 		let lengthData = imgData.length;
 		let img = function() {
@@ -188,16 +212,24 @@ window.addEventListener('DOMContentLoaded', () => {
 			return imgData[i];
 		};
 
+		renderStatusDots('.offer__slider', 'offer__slider_dots-wrapper', 'offer__slider_dots', lengthData);
+		const dots = document.querySelectorAll(classDots);
 		renderSlider(img().img, img().altimg, sliderItem);
 		sliderCounterCurrent(i, '#current',);
+		SliderDotsActive(i, dots);
 		document.querySelector(btnParentClass).addEventListener('click', (e) => {
 			if (e.target.classList.contains(btnNext)) {
 				++i;
+				renderSlider(img().img, img().altimg, sliderItem);
 			} else if (e.target.classList.contains(btnPrev)) {
 				--i;
+				renderSlider(img().img, img().altimg, sliderItem);
+			} else if (e.target.dataset.dot) {
+				i = e.target.dataset.dot - 1;
+				renderSlider(img().img, img().altimg, sliderItem);
 			}
-			renderSlider(img().img, img().altimg, sliderItem);
 			sliderCounterCurrent(i, currentElem);
+			SliderDotsActive(i, dots);
 		});
 
 		sliderCounterTotal(lengthData, totalElem);
@@ -205,8 +237,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	getData('http://localhost:3000/slider')
 	.then(data => {
-		sliderBtn('.offer__slider-counter', 'nextBtn', 'prevBtn', data, '.offer__slide', '#current', '#total');
+		sliderBtn('.offer__slider', 'nextBtn', 'prevBtn', data, '.offer__slide', '#current', '#total', '.offer__slider_dots');
 	});
+
+/* 	dots.forEach(item => {
+		item.addEventListener('click', () => {
+			i = item.dataset.dot - 1;
+			renderSlider(img().img, img().altimg, sliderItem);
+			sliderCounterCurrent(i, currentElem);
+			SliderDotsActive(i, dots);
+		});
+	}); */
 
 	    // Slider ваниант кода преподавателя
 /* 
@@ -486,6 +527,76 @@ window.addEventListener('DOMContentLoaded', () => {
 			prevModalDialog.classList.remove('hide');
 		}, 3000);
 	}
+
+	//calculator
+
+	const result = document.querySelector('.calculating__result span');
+	let sex = 'female',	
+		height, weight, age,
+		ratio = 1.375;
+	
+	function calcTotal() {
+		if (!sex || !height || !weight || !ratio || !age) {
+			result.textContent = '0000';
+			return;
+		}
+
+		if (sex === 'female') {
+			result.textContent = Math.round((447.6 + (9.2 * weight) + (3.2 * height) - (4.3 * age)) * ratio);
+		} else {
+			result.textContent = Math.round((88.36 + (13.4 * weight) + (4.8 * height) - (5.7 * age)) * ratio);
+		}
+	}
+
+	calcTotal();
+
+	function getStaticInformation (parentSelector, activeClass) {
+		const element = document.querySelectorAll(`${parentSelector} div`);
+
+		document.querySelector(parentSelector).addEventListener('click', (e) => {
+			if (e.target.getAttribute('data-ratio')) {
+				ratio = +e.target.getAttribute('data-ratio');
+			} else { //нажимает на кнопку, если это не data-ratio, остается только кнопка пола, сокращение кода
+				sex = e.target.getAttribute('data-gender');
+			}
+			
+			if (e.target.getAttribute('data-gender') || e.target.getAttribute('data-ratio')) {
+				element.forEach(elem => {
+					elem.classList.remove(activeClass);
+				});
+				e.target.classList.add(activeClass);
+			}
+
+			calcTotal();
+		});
+	}
+
+	getStaticInformation('#gender', 'calculating__choose-item_active');
+	getStaticInformation('.calculating__choose_big', 'calculating__choose-item_active');
+
+	function getDinamicInformation(selector) {
+		const input = document.querySelector(selector);
+
+		input.addEventListener('input', (e) => {
+			switch(input.getAttribute('id')) {
+				case 'height':
+					height = +input.value;
+					break;
+				case 'weight':
+					weight = +input.value;
+					break;
+				case 'age':
+					age = +input.value;
+					break;
+			}
+
+			calcTotal();
+		});
+	}
+
+	getDinamicInformation('#height');
+	getDinamicInformation('#weight');
+	getDinamicInformation('#age');
 
 	/* fetch('http://localhost:3000/menu')
 	.then(data => data.json())
